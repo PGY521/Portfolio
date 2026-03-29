@@ -240,73 +240,51 @@ const CLO_CATEGORY_COLORS = {
   Scene: '#718096',
 };
 
-// ===== CLO FILE UPLOAD & DISPLAY =====
-function uploadCloFile(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+// ===== CLO FILE MANUAL ENTRY =====
+const CLO_FORMATS_MANUAL = {
+  zprj: { name: '项目文件', icon: '📁', color: '#805ad5' },
+  zpac: { name: '服装包', icon: '👗', color: '#d53f8c' },
+  zfab: { name: '面料包', icon: '🧶', color: '#d69e2e' },
+  zse:  { name: '场景文件', icon: '🏞️', color: '#718096' },
+  trm:  { name: '贴图文件', icon: '🎨', color: '#38a169' },
+  btn:  { name: '纽扣文件', icon: '🔘', color: '#3182ce' },
+  bth:  { name: '纽扣批次', icon: '⚙️', color: '#3182ce' },
+  pos:  { name: '位置数据', icon: '📍', color: '#805ad5' },
+  hpos: { name: '热压位置', icon: '🔥', color: '#d53f8c' },
+  mtn:  { name: '动画文件', icon: '🎬', color: '#00b5d8' },
+  zacs: { name: '色谱文件', icon: '🌈', color: '#ed8936' },
+};
 
-  const validExts = Object.keys(CLO_FORMATS);
-  const ext = file.name.split('.').pop().toLowerCase();
-  if (!validExts.includes(ext)) {
-    showToast(`不支持的文件格式 "${ext}"，支持的格式：${validExts.join(', ')}`, 'error');
-    e.target.value = '';
-    return;
+function updateCloFormat() {
+  const ext = document.getElementById('cloFormatSelect').value;
+  if (ext) {
+    currentCloFile = {
+      ext,
+      fileName: `design.${ext}`,
+      icon: CLO_FORMATS_MANUAL[ext].icon,
+      color: CLO_FORMATS_MANUAL[ext].color,
+      garmentName: document.getElementById('cloGarmentName').value,
+      formatName: CLO_FORMATS_MANUAL[ext].name,
+      category: '',
+      version: document.getElementById('cloVersion').value,
+      season: document.getElementById('cloSeason').value,
+      brand: document.getElementById('cloBrand').value,
+      fabricCount: parseInt(document.getElementById('cloFabricCount').value) || 0,
+      sizeFormatted: '-',
+    };
+  } else {
+    currentCloFile = null;
   }
-
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const buffer = ev.target.result;
-      const parsed = parseCloFile(buffer, file.name, file.type);
-
-      if (!parsed) {
-        showToast('无法解析此 CLO 文件', 'error');
-        return;
-      }
-
-      currentCloFile = parsed;
-      document.getElementById('cloFileName').textContent = parsed.fileName;
-      document.getElementById('cloFileIcon').textContent = parsed.icon;
-      document.getElementById('cloFileMeta').textContent = `${parsed.formatName} · ${parsed.sizeFormatted}`;
-
-      // Build meta grid
-      const grid = document.getElementById('cloMetaGrid');
-      const items = [];
-      if (parsed.garmentName) items.push({ label: '名称', value: parsed.garmentName });
-      if (parsed.version) items.push({ label: '版本', value: 'v' + parsed.version });
-      if (parsed.category) items.push({ label: '类型', value: parsed.category });
-      if (parsed.garmentType) items.push({ label: '款式', value: capitalizeFirst(parsed.garmentType) });
-      if (parsed.season) items.push({ label: '系列', value: parsed.season });
-      if (parsed.brand) items.push({ label: '品牌', value: parsed.brand });
-      if (parsed.sizeFormatted) items.push({ label: '大小', value: parsed.sizeFormatted });
-      if (parsed.fabricCount > 0) items.push({ label: '面料数', value: parsed.fabricCount });
-
-      grid.innerHTML = items.map(item => `
-        <div class="clo-meta-item">
-          <span class="clo-meta-label">${item.label}</span>
-          <span class="clo-meta-value">${escapeHtml(item.value)}</span>
-        </div>
-      `).join('');
-
-      document.getElementById('cloFileInfo').style.display = '';
-      document.getElementById('cloUploadArea').style.display = 'none';
-      showToast(`${parsed.icon} ${parsed.formatName} 已加载`);
-    } catch (err) {
-      console.error('CLO parse error:', err);
-      showToast('文件读取失败', 'error');
-    }
-  };
-
-  reader.onerror = () => showToast('文件读取失败', 'error');
-  reader.readAsArrayBuffer(file);
-  e.target.value = '';
 }
 
-function removeCloFile() {
+function clearCloFields() {
+  document.getElementById('cloFormatSelect').value = '';
+  document.getElementById('cloGarmentName').value = '';
+  document.getElementById('cloSeason').value = '';
+  document.getElementById('cloBrand').value = '';
+  document.getElementById('cloFabricCount').value = '';
+  document.getElementById('cloVersion').value = '';
   currentCloFile = null;
-  document.getElementById('cloFileInfo').style.display = 'none';
-  document.getElementById('cloUploadArea').style.display = '';
-  document.getElementById('cloFileInput').value = '';
 }
 
 function capitalizeFirst(str) {
@@ -917,10 +895,8 @@ function openAddWork() {
   document.getElementById('workTags').value = '';
   document.getElementById('workLink').value = '';
   document.getElementById('imagePreviewWrap').style.display = 'none';
-  currentCloFile = null;
-  document.getElementById('cloFileInfo').style.display = 'none';
-  document.getElementById('cloUploadArea').style.display = '';
-  document.getElementById('cloFileInput').value = '';
+  // Reset CLO manual fields
+  clearCloFields();
   currentModelFile = null;
   document.getElementById('modelStatus').style.display = 'none';
   document.getElementById('modelUploadArea').style.display = '';
@@ -945,29 +921,17 @@ function editWork(id) {
   previewImage();
   refreshCategoryList();
 
-  // Load CLO file info
+  // Load CLO file info (manual entry)
   if (work.cloFile) {
     currentCloFile = work.cloFile;
-    document.getElementById('cloFileName').textContent = work.cloFile.fileName;
-    document.getElementById('cloFileIcon').textContent = work.cloFile.icon;
-    document.getElementById('cloFileMeta').textContent = `${work.cloFile.formatName} · ${work.cloFile.sizeFormatted}`;
-    const grid = document.getElementById('cloMetaGrid');
-    const items = [];
-    if (work.cloFile.garmentName) items.push({ label: '名称', value: work.cloFile.garmentName });
-    if (work.cloFile.version) items.push({ label: '版本', value: 'v' + work.cloFile.version });
-    if (work.cloFile.category) items.push({ label: '类别', value: work.cloFile.category });
-    if (work.cloFile.season) items.push({ label: '系列', value: work.cloFile.season });
-    if (work.cloFile.sizeFormatted) items.push({ label: '大小', value: work.cloFile.sizeFormatted });
-    grid.innerHTML = items.map(item => `
-      <div class="clo-meta-item">
-        <span class="clo-meta-label">${item.label}</span>
-        <span class="clo-meta-value">${escapeHtml(item.value)}</span>
-      </div>
-    `).join('');
-    document.getElementById('cloFileInfo').style.display = '';
-    document.getElementById('cloUploadArea').style.display = 'none';
+    document.getElementById('cloFormatSelect').value = work.cloFile.ext || '';
+    document.getElementById('cloGarmentName').value = work.cloFile.garmentName || '';
+    document.getElementById('cloSeason').value = work.cloFile.season || '';
+    document.getElementById('cloBrand').value = work.cloFile.brand || '';
+    document.getElementById('cloFabricCount').value = work.cloFile.fabricCount || '';
+    document.getElementById('cloVersion').value = work.cloFile.version || '';
   } else {
-    removeCloFile();
+    clearCloFields();
   }
 
   // Load 3D model info
@@ -996,6 +960,8 @@ function saveWork() {
   const year = document.getElementById('workYear').value.trim();
   const desc = document.getElementById('workDesc').value.trim();
   const image = document.getElementById('workImage').value.trim();
+  // Get latest CLO data from form
+  updateCloFormat();
   const cloFile = currentCloFile;
   const model = currentModelFile;
   const tags = document.getElementById('workTags').value.split(',').map(t => t.trim()).filter(Boolean);
@@ -1013,7 +979,7 @@ function saveWork() {
   }
   currentCloFile = null;
   currentModelFile = null;
-  removeCloFile();
+  clearCloFields();
   removeModelFile();
   saveData();
   renderAll();

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mix - 个人作品集</title>
+  <title>Mix - PORTFOLIO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -169,26 +169,52 @@
           <input type="text" id="workTags" placeholder="时尚, 服装, 运动" class="form-input" />
         </div>
 
-        <!-- CLO 设计文件上传 -->
+        <!-- CLO 设计文件信息（手动填写） -->
         <div class="form-group">
-          <label>CLO 设计文件（.zprj · .zpac · .zfab · .zse 等 · 可选）</label>
-          <div class="clo-upload-area" id="cloUploadArea" onclick="document.getElementById('cloFileInput').click()">
-            <div class="clo-upload-icon">🎨</div>
-            <div class="clo-upload-text">点击上传 CLO 文件</div>
-            <div class="clo-upload-hint">支持 .zprj .zpac .zfab .trm .btn .bth .pos .hpos .mtn .zacs .zse</div>
-            <input type="file" id="cloFileInput" accept=".zprj,.zpac,.zfab,.trm,.btn,.bth,.pos,.hpos,.mtn,.zacs,.zse" onchange="uploadCloFile(event)" style="display:none" />
-          </div>
-          <div class="clo-file-info" id="cloFileInfo" style="display:none">
-            <div class="clo-file-header">
-              <span class="clo-file-icon" id="cloFileIcon">📄</span>
-              <div class="clo-file-details">
-                <div class="clo-file-name" id="cloFileName"></div>
-                <div class="clo-file-meta" id="cloFileMeta"></div>
+          <label>服装设计信息（可选）</label>
+          <div class="clo-manual-form">
+            <div class="clo-form-row">
+              <div class="clo-form-field">
+                <label class="clo-field-label">文件格式</label>
+                <select id="cloFormatSelect" class="form-input" onchange="updateCloFormat()">
+                  <option value="">-- 选择格式 --</option>
+                  <option value="zprj">.zprj 项目文件</option>
+                  <option value="zpac">.zpac 服装包</option>
+                  <option value="zfab">.zfab 面料包</option>
+                  <option value="zse">.zse 场景文件</option>
+                  <option value="trm">.trm 贴图文件</option>
+                  <option value="btn">.btn 纽扣文件</option>
+                  <option value="bth">.bth 纽扣批次</option>
+                  <option value="pos">.pos 位置数据</option>
+                  <option value="hpos">.hpos 热压位置</option>
+                  <option value="mtn">.mtn 动画文件</option>
+                  <option value="zacs">.zacs 色谱文件</option>
+                </select>
               </div>
-              <button class="clo-file-remove" onclick="removeCloFile()" title="移除">✕</button>
+              <div class="clo-form-field">
+                <label class="clo-field-label">服装名称</label>
+                <input type="text" id="cloGarmentName" class="form-input" placeholder="如：春季连衣裙" />
+              </div>
             </div>
-            <div class="clo-meta-grid" id="cloMetaGrid">
-              <!-- dynamic meta fields -->
+            <div class="clo-form-row">
+              <div class="clo-form-field">
+                <label class="clo-field-label">系列/季节</label>
+                <input type="text" id="cloSeason" class="form-input" placeholder="如：SS 2024" />
+              </div>
+              <div class="clo-form-field">
+                <label class="clo-field-label">品牌</label>
+                <input type="text" id="cloBrand" class="form-input" placeholder="如：GAMEWEAR" />
+              </div>
+            </div>
+            <div class="clo-form-row">
+              <div class="clo-form-field">
+                <label class="clo-field-label">面料数量</label>
+                <input type="number" id="cloFabricCount" class="form-input" placeholder="0" min="0" />
+              </div>
+              <div class="clo-form-field">
+                <label class="clo-field-label">版本</label>
+                <input type="text" id="cloVersion" class="form-input" placeholder="如：1.0" />
+              </div>
             </div>
           </div>
         </div>

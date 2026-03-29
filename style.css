@@ -397,6 +397,39 @@ body {
 .clo-meta-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: .04em; }
 .clo-meta-value { font-size: 13px; color: var(--text); font-weight: 500; }
 
+/* ===== CLO MANUAL FORM ===== */
+.clo-manual-form {
+  background: var(--bg-2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.clo-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.clo-form-row:last-child { margin-bottom: 0; }
+.clo-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.clo-field-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.clo-form-field .form-input {
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+@media (max-width: 480px) {
+  .clo-form-row { grid-template-columns: 1fr; }
+}
+
 /* ===== 3D BADGE ===== */
 .work-badge-3d {
   position: absolute; top: 10px; left: 10px;
