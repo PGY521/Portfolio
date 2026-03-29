@@ -579,6 +579,7 @@ function getDefaultProfile() {
     avatar: '',
     year: '2024',
     socials: [],
+    categories: '', // 自定义分类，逗号分隔
   };
 }
 
@@ -786,7 +787,12 @@ function renderSocials() {
 }
 
 function renderCategories() {
-  const cats = deriveCategories(state.works);
+  // 优先使用自定义分类，否则自动从作品生成
+  const customCats = state.profile.categories
+    ? state.profile.categories.split(',').map(c => c.trim()).filter(Boolean)
+    : null;
+  const cats = customCats || deriveCategories(state.works);
+
   const tabs = document.getElementById('filterTabs');
   tabs.querySelectorAll('[data-cat]:not([data-cat="all"])').forEach(el => el.remove());
   cats.forEach(cat => {
@@ -836,18 +842,47 @@ function renderEmptyState() {
   const empty = document.getElementById('emptyState');
   const grid = document.getElementById('worksGrid');
   const filtered = getFilteredWorks();
+  const emptyMsg = empty.querySelector('p');
   if (filtered.length === 0) {
     empty.style.display = 'flex';
     grid.style.display = 'none';
+    if (currentSearchQuery.trim()) {
+      emptyMsg.textContent = `没有找到包含"${escapeHtml(currentSearchQuery)}"的作品`;
+    } else if (state.works.length === 0) {
+      emptyMsg.textContent = '点击右上角「管理作品」开始添加你的第一个作品吧';
+    } else {
+      emptyMsg.textContent = '该分类下暂无作品';
+    }
   } else {
     empty.style.display = 'none';
     grid.style.display = '';
   }
 }
 
+// Current search query
+let currentSearchQuery = '';
+
 function getFilteredWorks() {
-  if (state.currentFilter === 'all') return [...state.works];
-  return state.works.filter(w => w.category === state.currentFilter);
+  let works = state.works;
+
+  // Filter by category
+  if (state.currentFilter !== 'all') {
+    works = works.filter(w => w.category === state.currentFilter);
+  }
+
+  // Filter by search query
+  if (currentSearchQuery.trim()) {
+    const q = currentSearchQuery.toLowerCase().trim();
+    works = works.filter(w =>
+      (w.title && w.title.toLowerCase().includes(q)) ||
+      (w.desc && w.desc.toLowerCase().includes(q)) ||
+      (w.category && w.category.toLowerCase().includes(q)) ||
+      (w.tags && w.tags.some(t => t.toLowerCase().includes(q))) ||
+      (w.cloFile && w.cloFile.garmentName && w.cloFile.garmentName.toLowerCase().includes(q))
+    );
+  }
+
+  return works;
 }
 
 // ===== FILTER =====
@@ -856,6 +891,13 @@ function filterWorks(cat) {
   document.querySelectorAll('.filter-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.cat === cat);
   });
+  renderWorks();
+  renderEmptyState();
+}
+
+// ===== SEARCH =====
+function searchWorks(query) {
+  currentSearchQuery = query;
   renderWorks();
   renderEmptyState();
 }
@@ -1183,6 +1225,7 @@ function openProfileEditor() {
   document.getElementById('editAvatar').value = p.avatar || '';
   document.getElementById('editYear').value = p.year || new Date().getFullYear().toString();
   document.getElementById('editSocial').value = (p.socials || []).map(s => `${s.name || ''},${s.url || ''}`).join('\n');
+  document.getElementById('editCategories').value = p.categories || '';
   document.getElementById('profileModal').style.display = '';
 }
 
@@ -1196,6 +1239,7 @@ function saveProfile() {
   const bio = document.getElementById('editBio').value.trim();
   const avatar = document.getElementById('editAvatar').value.trim();
   const year = document.getElementById('editYear').value.trim();
+  const categories = document.getElementById('editCategories').value.trim();
   const socialRaw = document.getElementById('editSocial').value.trim();
   const socials = socialRaw
     ? socialRaw.split('\n').map(line => {
@@ -1203,7 +1247,7 @@ function saveProfile() {
         return { name: parts[0]?.trim() || '', url: parts[1]?.trim() || '' };
       }).filter(s => s.name)
     : [];
-  state.profile = { name, bio, avatar, year, socials };
+  state.profile = { ...state.profile, name, bio, avatar, year, socials, categories };
   saveData();
   renderAll();
   closeProfileModal();
