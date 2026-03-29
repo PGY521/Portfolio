@@ -3,10 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mix - 作品集</title>
+  <title>Mix - 个人作品集</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -159,7 +167,7 @@
           <input type="text" id="workTags" placeholder="时尚, 服装, 运动" class="form-input" />
         </div>
 
-
+        <!-- CLO 设计文件上传 -->
         <div class="form-group">
           <label>CLO 设计文件（.zprj · .zpac · .zfab · .zse 等 · 可选）</label>
           <div class="clo-upload-area" id="cloUploadArea" onclick="document.getElementById('cloFileInput').click()">
@@ -182,6 +190,22 @@
             </div>
           </div>
         </div>
+
+        <!-- 3D 模型文件上传 -->
+        <div class="form-group">
+          <label>3D 模型文件（.glb / .gltf · 可选）</label>
+          <div class="model-upload-area" id="modelUploadArea" onclick="document.getElementById('modelFileInput').click()">
+            <div class="model-upload-icon">📦</div>
+            <div class="model-upload-text">点击上传 3D 模型文件</div>
+            <div class="model-upload-hint">支持 .glb 和 .gltf 格式（从 CLO 导出 glTF 2.0）</div>
+            <input type="file" id="modelFileInput" accept=".glb,.gltf" onchange="uploadModelFile(event)" style="display:none" />
+          </div>
+          <div class="model-status" id="modelStatus" style="display:none">
+            <span class="model-name" id="modelName"></span>
+            <span class="model-badge">3D</span>
+          </div>
+        </div>
+
         <div class="form-group">
           <label>外链（可选）</label>
           <input type="url" id="workLink" placeholder="https://..." class="form-input" />
@@ -194,29 +218,104 @@
     </div>
   </div>
 
-  <!-- ===== WORK DETAIL MODAL ===== -->
+  <!-- ===== WORK DETAIL MODAL - CLO STYLE ===== -->
   <div class="modal-overlay" id="detailModal" style="display:none" onclick="closeDetailModal(event)">
-    <div class="modal modal-large" id="detailModalInner">
-      <div class="modal-header">
-        <div></div>
-        <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    <div class="modal modal-clo" id="detailModalInner" onclick="event.stopPropagation()">
+      <div class="clo-modal-header">
+        <div class="clo-modal-title" id="detailModalTitle">作品详情</div>
+        <div class="clo-modal-actions">
+          <button class="clo-action-btn" id="detailEditBtn" onclick="editFromDetail()" title="编辑">✏️</button>
+          <button class="modal-close clo-modal-close" onclick="closeDetailModal()">✕</button>
+        </div>
       </div>
-      <div class="detail-body" id="detailBody">
-        <!-- dynamic content -->
-      </div>
-      <!-- CLO file info panel -->
-      <div class="clo-detail-panel" id="cloDetailPanel" style="display:none">
-        <div class="clo-detail-header">
-          <span class="clo-detail-icon" id="cloDetailIcon">📄</span>
-          <div>
-            <div class="clo-detail-name" id="cloDetailName"></div>
-            <div class="clo-detail-type" id="cloDetailType"></div>
+      <div class="clo-modal-body">
+        <!-- Left: 3D Viewer -->
+        <div class="clo-viewer-section" id="cloViewerSection">
+          <!-- 3D Canvas will be inserted here -->
+          <div class="clo-viewer-empty" id="cloViewerEmpty">
+            <div class="clo-viewer-placeholder">
+              <span class="clo-viewer-icon">👗</span>
+              <span class="clo-viewer-text">暂无 3D 模型</span>
+              <span class="clo-viewer-hint">请上传 .glb 或 .gltf 文件</span>
+            </div>
+          </div>
+          <div class="clo-viewer-wrap" id="detail3DWrap" style="display:none">
+            <canvas id="detail3DCanvas"></canvas>
+            <!-- Loading -->
+            <div class="clo-viewer-loading" id="cloViewerLoading">
+              <div class="clo-loading-spinner"></div>
+              <span>加载中...</span>
+            </div>
+          </div>
+          <!-- Viewer Controls -->
+          <div class="clo-viewer-controls" id="cloViewerControls" style="display:none">
+            <div class="clo-control-group">
+              <button class="clo-control-btn" onclick="resetThreeCamera()" title="重置视角">🏠</button>
+              <button class="clo-control-btn" onclick="toggleThreeAutoRotate()" id="threeRotateBtn" title="自动旋转">🔄</button>
+              <button class="clo-control-btn" onclick="toggleThreeWireframe()" id="threeWireframeBtn" title="线框模式">◇</button>
+            </div>
+            <div class="clo-control-hint">拖拽旋转 · 滚轮缩放 · 右键平移</div>
           </div>
         </div>
-        <div class="clo-detail-meta" id="cloDetailMeta">
-          <!-- dynamic -->
+
+        <!-- Right: Info Panel -->
+        <div class="clo-info-section" id="cloInfoSection">
+          <!-- Category Badge -->
+          <div class="clo-info-category" id="detailCategory">GAMEWEAR</div>
+          
+          <!-- Title -->
+          <h1 class="clo-info-title" id="detailTitle">作品名称</h1>
+          
+          <!-- Year -->
+          <div class="clo-info-year" id="detailYear">2024</div>
+
+          <!-- Description -->
+          <p class="clo-info-desc" id="detailDesc">作品描述内容</p>
+
+          <!-- Tags -->
+          <div class="clo-info-tags" id="detailTags"></div>
+
+          <!-- Garment Details -->
+          <div class="clo-info-panel" id="cloGarmentPanel">
+            <div class="clo-panel-header">
+              <span class="clo-panel-icon">👗</span>
+              <span class="clo-panel-title">服装信息</span>
+            </div>
+            <div class="clo-panel-content" id="cloGarmentContent">
+              <!-- Dynamic garment info -->
+            </div>
+          </div>
+
+          <!-- Fabric Details -->
+          <div class="clo-info-panel" id="cloFabricPanel" style="display:none">
+            <div class="clo-panel-header">
+              <span class="clo-panel-icon">🧵</span>
+              <span class="clo-panel-title">面料信息</span>
+            </div>
+            <div class="clo-panel-content" id="cloFabricContent">
+              <!-- Dynamic fabric info -->
+            </div>
+          </div>
+
+          <!-- CLO File Info -->
+          <div class="clo-info-panel" id="cloFileDetailPanel" style="display:none">
+            <div class="clo-panel-header">
+              <span class="clo-panel-icon" id="cloDetailIcon">📄</span>
+              <span class="clo-panel-title">CLO 文件</span>
+            </div>
+            <div class="clo-panel-content" id="cloDetailContent">
+              <!-- Dynamic CLO file info -->
+            </div>
+          </div>
+
+          <!-- External Link -->
+          <div class="clo-info-link" id="detailLinkWrap" style="display:none">
+            <a href="#" class="clo-external-link" id="detailLink" target="_blank" rel="noopener">
+              <span>🔗</span>
+              <span>查看原链接</span>
+            </a>
+          </div>
         </div>
-        <div class="clo-detail-desc" id="cloDetailDesc"></div>
       </div>
     </div>
   </div>
