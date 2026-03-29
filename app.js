@@ -701,6 +701,55 @@ function getSampleWorks() {
   ];
 }
 
+// ===== EXPORT / IMPORT DATA =====
+function exportData() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    profile: state.profile,
+    works: state.works,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `portfolio-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('数据已导出', 'success');
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.profile) state.profile = { ...getDefaultProfile(), ...data.profile };
+        if (data.works && Array.isArray(data.works)) {
+          state.works = data.works;
+          showToast(`已导入 ${data.works.length} 个作品`, 'success');
+        } else {
+          showToast('文件格式错误', 'error');
+          return;
+        }
+        saveData();
+        renderAll();
+        closeProfileModal();
+      } catch (err) {
+        showToast('导入失败：' + err.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
