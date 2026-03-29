@@ -1,14 +1,10 @@
-*.tar
-*.tar.*
-*.jar
-*.exe
-*.msi
-*.deb
-*.zip
-*.tgz
-*.log
-*.log.*
-*.sig
+# Dependencies
+node_modules/
 
-pkg/
-src/
+# Local env files
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db

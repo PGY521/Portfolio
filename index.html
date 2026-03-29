@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mix - 个人作品集</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== TOP NAV ===== -->
+  <header class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="#" class="logo">MIX <span class="logo-dot">·</span> PORTFOLIO</a>
+      <nav class="nav-links">
+        <a href="#" class="nav-link active" data-section="home">作品集</a>
+        <a href="#" class="nav-link" data-section="about">关于我</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="btn btn-outline" id="editModeBtn" onclick="toggleEditMode()">管理作品</button>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#" class="nav-link" data-section="home">作品集</a>
+      <a href="#" class="nav-link" data-section="about">关于我</a>
+      <button class="btn btn-outline" onclick="toggleEditMode()">管理作品</button>
+    </div>
+  </header>
+
+  <!-- ===== HERO PROFILE ===== -->
+  <section class="profile-hero" id="heroSection">
+    <div class="profile-bg-blur"></div>
+    <div class="profile-content">
+      <div class="avatar-wrap">
+        <img src="" alt="头像" class="avatar" id="avatarImg" onerror="this.style.display='none'" />
+        <div class="avatar-fallback" id="avatarFallback">M</div>
+        <button class="avatar-edit-btn" id="avatarEditBtn" onclick="editAvatar()" title="更换头像">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
+      <div class="profile-info">
+        <h1 class="profile-name" id="profileName" ondblclick="editField('profileName')">Mix</h1>
+        <p class="profile-bio" id="profileBio" ondblclick="editField('profileBio')">时尚设计师 · 服装创意人 · 点击此处编辑简介</p>
+        <div class="profile-stats">
+          <div class="stat-item">
+            <span class="stat-num" id="statProjects">0</span>
+            <span class="stat-label">项目</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-num" id="statCollections">0</span>
+            <span class="stat-label">系列</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-num" id="statYear">2024</span>
+            <span class="stat-label">创作至今</span>
+          </div>
+        </div>
+        <div class="social-links" id="socialLinks">
+          <!-- injected dynamically -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main-content">
+
+    <!-- Category Filter -->
+    <div class="filter-bar" id="filterBar">
+      <div class="filter-tabs" id="filterTabs">
+        <button class="filter-tab active" data-cat="all" onclick="filterWorks('all')">全部</button>
+        <!-- dynamic categories injected here -->
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')" title="网格视图">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </button>
+        <button class="view-btn" id="listViewBtn" onclick="setView('list')" title="列表视图">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Works Grid -->
+    <div class="works-grid" id="worksGrid">
+      <!-- Cards injected here -->
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-icon">🎨</div>
+      <h3>还没有作品</h3>
+      <p>点击右上角「管理作品」开始添加你的第一个作品吧</p>
+      <button class="btn btn-primary" onclick="toggleEditMode(); setTimeout(()=>openAddWork(), 100)">+ 添加第一个作品</button>
+    </div>
+
+  </main>
+
+  <!-- ===== EDIT MODE TOOLBAR ===== -->
+  <div class="edit-toolbar" id="editToolbar" style="display:none">
+    <div class="edit-toolbar-inner">
+      <span class="edit-mode-label">✏️ 编辑模式</span>
+      <button class="btn btn-primary" onclick="openAddWork()">+ 添加作品</button>
+      <button class="btn btn-outline-white" onclick="openProfileEditor()">编辑个人信息</button>
+      <button class="btn btn-ghost" onclick="toggleEditMode()">退出编辑</button>
+    </div>
+  </div>
+
+  <!-- ===== ADD/EDIT WORK MODAL ===== -->
+  <div class="modal-overlay" id="workModal" style="display:none" onclick="closeWorkModal(event)">
+    <div class="modal" id="workModalInner">
+      <div class="modal-header">
+        <h2 id="workModalTitle">添加作品</h2>
+        <button class="modal-close" onclick="closeWorkModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>作品名称 <span class="required">*</span></label>
+          <input type="text" id="workTitle" placeholder="输入作品名称" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>作品封面图（URL 或 Base64）</label>
+          <div class="image-input-group">
+            <input type="text" id="workImage" placeholder="粘贴图片 URL..." class="form-input" oninput="previewImage()" />
+            <label class="btn btn-outline upload-btn" title="上传本地图片">
+              📁 上传
+              <input type="file" accept="image/*" onchange="uploadLocalImage(event)" style="display:none" />
+            </label>
+          </div>
+          <div class="image-preview-wrap" id="imagePreviewWrap" style="display:none">
+            <img id="imagePreview" src="" alt="预览" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>分类 <span class="required">*</span></label>
+            <input type="text" id="workCategory" placeholder="如：GAMEWEAR / EVERYWEAR" class="form-input" list="catList" />
+            <datalist id="catList"></datalist>
+          </div>
+          <div class="form-group">
+            <label>年份</label>
+            <input type="text" id="workYear" placeholder="2024" class="form-input" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>作品描述</label>
+          <textarea id="workDesc" rows="3" placeholder="简单介绍这件作品..." class="form-input"></textarea>
+        </div>
+        <div class="form-group">
+          <label>标签（逗号分隔）</label>
+          <input type="text" id="workTags" placeholder="时尚, 服装, 运动" class="form-input" />
+        </div>
+
+
+        <div class="form-group">
+          <label>CLO 设计文件（.zprj · .zpac · .zfab · .zse 等 · 可选）</label>
+          <div class="clo-upload-area" id="cloUploadArea" onclick="document.getElementById('cloFileInput').click()">
+            <div class="clo-upload-icon">🎨</div>
+            <div class="clo-upload-text">点击上传 CLO 文件</div>
+            <div class="clo-upload-hint">支持 .zprj .zpac .zfab .trm .btn .bth .pos .hpos .mtn .zacs .zse</div>
+            <input type="file" id="cloFileInput" accept=".zprj,.zpac,.zfab,.trm,.btn,.bth,.pos,.hpos,.mtn,.zacs,.zse" onchange="uploadCloFile(event)" style="display:none" />
+          </div>
+          <div class="clo-file-info" id="cloFileInfo" style="display:none">
+            <div class="clo-file-header">
+              <span class="clo-file-icon" id="cloFileIcon">📄</span>
+              <div class="clo-file-details">
+                <div class="clo-file-name" id="cloFileName"></div>
+                <div class="clo-file-meta" id="cloFileMeta"></div>
+              </div>
+              <button class="clo-file-remove" onclick="removeCloFile()" title="移除">✕</button>
+            </div>
+            <div class="clo-meta-grid" id="cloMetaGrid">
+              <!-- dynamic meta fields -->
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>外链（可选）</label>
+          <input type="url" id="workLink" placeholder="https://..." class="form-input" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeWorkModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveWork()">保存作品</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== WORK DETAIL MODAL ===== -->
+  <div class="modal-overlay" id="detailModal" style="display:none" onclick="closeDetailModal(event)">
+    <div class="modal modal-large" id="detailModalInner">
+      <div class="modal-header">
+        <div></div>
+        <button class="modal-close" onclick="closeDetailModal()">✕</button>
+      </div>
+      <div class="detail-body" id="detailBody">
+        <!-- dynamic content -->
+      </div>
+      <!-- CLO file info panel -->
+      <div class="clo-detail-panel" id="cloDetailPanel" style="display:none">
+        <div class="clo-detail-header">
+          <span class="clo-detail-icon" id="cloDetailIcon">📄</span>
+          <div>
+            <div class="clo-detail-name" id="cloDetailName"></div>
+            <div class="clo-detail-type" id="cloDetailType"></div>
+          </div>
+        </div>
+        <div class="clo-detail-meta" id="cloDetailMeta">
+          <!-- dynamic -->
+        </div>
+        <div class="clo-detail-desc" id="cloDetailDesc"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PROFILE EDITOR MODAL ===== -->
+  <div class="modal-overlay" id="profileModal" style="display:none" onclick="closeProfileModal(event)">
+    <div class="modal" id="profileModalInner">
+      <div class="modal-header">
+        <h2>编辑个人信息</h2>
+        <button class="modal-close" onclick="closeProfileModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>姓名 / 昵称</label>
+          <input type="text" id="editName" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label>个人简介</label>
+          <textarea id="editBio" rows="3" class="form-input"></textarea>
+        </div>
+        <div class="form-group">
+          <label>头像 URL</label>
+          <div class="image-input-group">
+            <input type="text" id="editAvatar" class="form-input" placeholder="粘贴图片 URL..." />
+            <label class="btn btn-outline upload-btn" title="上传头像">
+              📁 上传
+              <input type="file" accept="image/*" onchange="uploadAvatarImage(event)" style="display:none" />
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>创作起始年份</label>
+          <input type="text" id="editYear" class="form-input" placeholder="2020" />
+        </div>
+        <div class="form-group">
+          <label>社交链接（每行一个，格式：平台名,链接）</label>
+          <textarea id="editSocial" rows="3" class="form-input" placeholder="Instagram,https://instagram.com/xxx&#10;Behance,https://behance.net/xxx"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeProfileModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveProfile()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DELETE CONFIRM ===== -->
+  <div class="modal-overlay" id="deleteConfirm" style="display:none" onclick="closeDeleteConfirm(event)">
+    <div class="modal modal-small">
+      <div class="modal-header">
+        <h2>删除作品</h2>
+        <button class="modal-close" onclick="closeDeleteConfirm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>确定要删除「<strong id="deleteWorkTitle"></strong>」吗？此操作无法撤销。</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeDeleteConfirm()">取消</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
