@@ -130,20 +130,20 @@ function fitCameraToModel(camera, controls, model, renderer) {
   if (!model) return;
   const { THREE } = threeEngine;
 
-  // 先记录当前世界变换，然后归零模型位置再计算包围盒
-  const worldPos = new THREE.Vector3();
-  model.getWorldPosition(worldPos);
-  model.position.sub(worldPos); // 移回原点
-  model.updateMatrixWorld(true);
-
+  // 计算模型包围盒
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
 
-  // 把模型中心对齐到场景原点
-  model.position.copy(center);
+  // 把模型底部对齐到 y=0，这样脚底就在地面上
+  const bottomOffset = box.min.y;
+  model.position.y -= bottomOffset;
   model.updateMatrixWorld(true);
+
+  // 重新计算包围盒（模型已移动）
+  box.setFromObject(model);
+  const newCenter = box.getCenter(new THREE.Vector3());
 
   // 透视相机根据画幅和模型尺寸计算最佳视角距离
   const fov = camera.fov * (Math.PI / 180);
@@ -151,20 +151,19 @@ function fitCameraToModel(camera, controls, model, renderer) {
   cameraZ *= 1.6;
 
   // 相机正对模型中心
-  camera.position.set(center.x, center.y, center.z + cameraZ);
-  controls.target.copy(center);
+  camera.position.set(newCenter.x, newCenter.y, newCenter.z + cameraZ);
+  controls.target.copy(newCenter);
 
   // 允许缩放到很近和很远，不设硬性限制
   controls.minDistance = 0.1;
   controls.maxDistance = Infinity;
   controls.update();
 
-  // 地面贴合模型底部（box.min.y 现在是模型脚底到原点的距离）
-  const groundY = box.min.y;
+  // 地面放在 y=0（模型底部已经对齐到0）
   if (threeEngine.scene) {
     threeEngine.scene.traverse(obj => {
-      if (obj.name === 'portfolioGround') obj.position.y = groundY;
-      if (obj.name === 'portfolioGrid') obj.position.y = groundY;
+      if (obj.name === 'portfolioGround') obj.position.y = 0;
+      if (obj.name === 'portfolioGrid') obj.position.y = 0;
     });
   }
 }
