@@ -576,6 +576,7 @@ let state = {
 document.addEventListener('DOMContentLoaded', async () => {
   loadData();
   renderAll();
+  applyProfileBg();
   setupScrollNav();
   setupNavLinks();
   await loadThree();
@@ -1283,6 +1284,7 @@ function openProfileEditor() {
   document.getElementById('editYear').value = p.year || new Date().getFullYear().toString();
   document.getElementById('editSocial').value = (p.socials || []).map(s => `${s.name || ''},${s.url || ''}`).join('\n');
   document.getElementById('editCategories').value = p.categories || '';
+  document.getElementById('editBgImage').value = p.bgImage || '';
   document.getElementById('profileModal').style.display = '';
 }
 
@@ -1297,6 +1299,7 @@ function saveProfile() {
   const avatar = document.getElementById('editAvatar').value.trim();
   const year = document.getElementById('editYear').value.trim();
   const categories = document.getElementById('editCategories').value.trim();
+  const bgImage = document.getElementById('editBgImage').value.trim();
   const socialRaw = document.getElementById('editSocial').value.trim();
   const socials = socialRaw
     ? socialRaw.split('\n').map(line => {
@@ -1304,11 +1307,36 @@ function saveProfile() {
         return { name: parts[0]?.trim() || '', url: parts[1]?.trim() || '' };
       }).filter(s => s.name)
     : [];
-  state.profile = { ...state.profile, name, bio, avatar, year, socials, categories };
+  state.profile = { ...state.profile, name, bio, avatar, year, socials, categories, bgImage };
   saveData();
   renderAll();
+  applyProfileBg();
   closeProfileModal();
   showToast('个人信息已更新', 'success');
+}
+
+// 更新个人资料区背景图
+function applyProfileBg() {
+  const bg = document.querySelector('.profile-bg-blur');
+  if (!bg) return;
+  const img = state.profile.bgImage;
+  if (img) {
+    bg.style.backgroundImage = `url('${img}')`;
+  } else {
+    bg.style.backgroundImage = "url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=60')";
+  }
+}
+
+// 上传背景图
+function uploadBgImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('editBgImage').value = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
 }
 
 function editAvatar() {
