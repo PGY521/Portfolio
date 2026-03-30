@@ -129,15 +129,25 @@ function initThreeScene(canvasId, modelUrl) {
 function fitCameraToModel(camera, controls, model, renderer) {
   if (!model) return;
   const { THREE } = threeEngine;
+
+  // 先记录当前世界变换，然后归零模型位置再计算包围盒
+  const worldPos = new THREE.Vector3();
+  model.getWorldPosition(worldPos);
+  model.position.sub(worldPos); // 移回原点
+  model.updateMatrixWorld(true);
+
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
 
+  // 把模型中心对齐到场景原点
+  model.position.copy(center);
+  model.updateMatrixWorld(true);
+
   // 透视相机根据画幅和模型尺寸计算最佳视角距离
   const fov = camera.fov * (Math.PI / 180);
   let cameraZ = maxDim / (2 * Math.tan(fov / 2));
-  // 1.5倍焦距 + 再稍微远一点，确保全身都在画面里
   cameraZ *= 1.6;
 
   // 相机正对模型中心
@@ -149,7 +159,7 @@ function fitCameraToModel(camera, controls, model, renderer) {
   controls.maxDistance = Infinity;
   controls.update();
 
-  // 地面贴合模型底部
+  // 地面贴合模型底部（box.min.y 现在是模型脚底到原点的距离）
   const groundY = box.min.y;
   if (threeEngine.scene) {
     threeEngine.scene.traverse(obj => {
