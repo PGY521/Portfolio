@@ -39,7 +39,7 @@ function initThreeScene(canvasId, modelUrl) {
   // Camera
   const w = canvas.clientWidth || 800;
   const h = canvas.clientHeight || 420;
-  const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
+  const camera = new THREE.PerspectiveCamera(45, w / h, 0.01, 2000);
   camera.position.set(0, 1.5, 4);
   threeEngine.camera = camera;
 
@@ -134,17 +134,24 @@ function fitCameraToModel(camera, controls, model, renderer) {
   const fov = camera.fov * (Math.PI / 180);
   let cameraZ = maxDim / (2 * Math.tan(fov / 2));
   cameraZ *= 1.8;
-  // 相机正对模型中心，不做垂直偏移
+
+  // 相机正对模型中心
   camera.position.set(center.x, center.y, center.z + cameraZ);
   controls.target.copy(center);
+
+  // 动态调整远近裁剪平面，防止缩放时变空白
+  camera.near = maxDim * 0.001;
+  camera.far = maxDim * 100;
+  camera.updateProjectionMatrix();
+
   controls.update();
 
-  // 让地面贴合模型底部
-  const groundY = box.min.y - 0.01;
+  // 地面严格贴合模型底部（box.min.y 就是脚底）
+  const groundY = box.min.y;
   if (threeEngine.scene) {
     threeEngine.scene.traverse(obj => {
       if (obj.name === 'portfolioGround') obj.position.y = groundY;
-      if (obj.name === 'portfolioGrid') obj.position.y = groundY + 0.01;
+      if (obj.name === 'portfolioGrid') obj.position.y = groundY;
     });
   }
 }
