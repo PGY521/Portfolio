@@ -86,7 +86,9 @@ function initThreeScene(canvasId, modelUrl) {
   const grid = new THREE.GridHelper(10, 20, 0xcccccc, 0xe0e0e0);
   grid.name = 'portfolioGrid';
   grid.position.y = -0.49;
+  grid.visible = false; // 默认隐藏
   scene.add(grid);
+  threeEngine.grid = grid;
 
   // Load model
   if (modelUrl) {
@@ -198,6 +200,15 @@ function toggleThreeAutoRotate() {
   if (btn) {
     btn.textContent = threeAutoRotate ? '🔄' : '⏸️';
     btn.classList.toggle('active', threeAutoRotate);
+  }
+}
+
+function toggleThreeGrid() {
+  if (!threeEngine || !threeEngine.grid) return;
+  threeEngine.grid.visible = !threeEngine.grid.visible;
+  const btn = document.getElementById('threeGridBtn');
+  if (btn) {
+    btn.classList.toggle('active', threeEngine.grid.visible);
   }
 }
 
