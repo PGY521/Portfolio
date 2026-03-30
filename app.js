@@ -76,6 +76,7 @@ function initThreeScene(canvasId, modelUrl) {
   const groundGeo = new THREE.PlaneGeometry(20, 20);
   const groundMat = new THREE.MeshStandardMaterial({ color: 0xe8e8ea, roughness: 1 });
   const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.name = 'portfolioGround';
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.5;
   ground.receiveShadow = true;
@@ -83,6 +84,7 @@ function initThreeScene(canvasId, modelUrl) {
 
   // Grid
   const grid = new THREE.GridHelper(10, 20, 0xcccccc, 0xe0e0e0);
+  grid.name = 'portfolioGrid';
   grid.position.y = -0.49;
   scene.add(grid);
 
@@ -124,16 +126,27 @@ function initThreeScene(canvasId, modelUrl) {
 
 function fitCameraToModel(camera, controls, model, renderer) {
   if (!model) return;
+  const { THREE } = threeEngine;
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
   const fov = camera.fov * (Math.PI / 180);
   let cameraZ = maxDim / (2 * Math.tan(fov / 2));
-  cameraZ *= 1.5;
-  camera.position.set(center.x, center.y + size.y * 0.2, center.z + cameraZ);
+  cameraZ *= 1.8;
+  // 相机正对模型中心，不做垂直偏移
+  camera.position.set(center.x, center.y, center.z + cameraZ);
   controls.target.copy(center);
   controls.update();
+
+  // 让地面贴合模型底部
+  const groundY = box.min.y - 0.01;
+  if (threeEngine.scene) {
+    threeEngine.scene.traverse(obj => {
+      if (obj.name === 'portfolioGround') obj.position.y = groundY;
+      if (obj.name === 'portfolioGrid') obj.position.y = groundY + 0.01;
+    });
+  }
 }
 
 function animateThree() {
@@ -825,6 +838,7 @@ function renderWorks() {
     return `
       <article class="work-card ${hasModel ? 'has-3d' : ''}" data-id="${work.id}" onclick="openDetail('${work.id}')">
         <button class="edit-btn" onclick="event.stopPropagation(); editWork('${work.id}')" title="编辑">✏️</button>
+        <button class="duplicate-btn" onclick="event.stopPropagation(); duplicateWork('${work.id}')" title="复制">📋</button>
         <button class="delete-btn" onclick="event.stopPropagation(); promptDelete('${work.id}')" title="删除">🗑️</button>
         <div class="work-thumb">${imageHtml}${modelBadge}${cloBadge ? `<div class="work-clo-badge">${cloBadge}</div>` : ''}</div>
         <div class="work-info">
@@ -1060,6 +1074,21 @@ function confirmDelete() {
   renderAll();
   closeDeleteConfirm();
   showToast('作品已删除', 'success');
+}
+
+// ===== DUPLICATE WORK =====
+function duplicateWork(id) {
+  const work = state.works.find(w => w.id === id);
+  if (!work) return;
+  const copy = JSON.parse(JSON.stringify(work)); // 深拷贝
+  copy.id = uid();
+  copy.title = work.title + ' - 副本';
+  // 插入到原作品后面
+  const idx = state.works.findIndex(w => w.id === id);
+  state.works.splice(idx + 1, 0, copy);
+  saveData();
+  renderAll();
+  showToast('作品已复制', 'success');
 }
 
 // ===== DETAIL MODAL - CLO STYLE =====
