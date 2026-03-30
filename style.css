@@ -219,7 +219,7 @@ body {
   height: 140px;
 }
 .works-grid.list-view .work-thumb {
-  width: 140px; height: 140px; flex-shrink: 0; border-radius: var(--radius) 0 0 var(--radius); }
+  width: 79px; height: 140px; flex-shrink: 0; border-radius: var(--radius) 0 0 var(--radius); aspect-ratio: 9 / 16; }
 .works-grid.list-view .work-info { padding: 16px 20px; }
 .works-grid.list-view .work-thumb-img { height: 100%; }
 
@@ -261,7 +261,7 @@ body {
 }
 .work-card .edit-btn:hover { background: var(--text); }
 .edit-mode .work-card .edit-btn { display: flex; }
-.work-thumb { position: relative; width: 100%; aspect-ratio: 4/3; overflow: hidden; }
+.work-thumb { position: relative; width: 100%; aspect-ratio: 9 / 16; overflow: hidden; }
 .work-thumb-img {
   width: 100%; height: 100%; object-fit: cover;
   transition: transform .4s ease;
