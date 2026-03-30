@@ -39,7 +39,7 @@ function initThreeScene(canvasId, modelUrl) {
   // Camera
   const w = canvas.clientWidth || 800;
   const h = canvas.clientHeight || 420;
-  const camera = new THREE.PerspectiveCamera(45, w / h, 0.01, 2000);
+  const camera = new THREE.PerspectiveCamera(45, w / h, 0.05, 5000);
   camera.position.set(0, 1.5, 4);
   threeEngine.camera = camera;
 
@@ -131,22 +131,23 @@ function fitCameraToModel(camera, controls, model, renderer) {
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
+
+  // 透视相机根据画幅和模型尺寸计算最佳视角距离
   const fov = camera.fov * (Math.PI / 180);
   let cameraZ = maxDim / (2 * Math.tan(fov / 2));
-  cameraZ *= 1.8;
+  // 1.5倍焦距 + 再稍微远一点，确保全身都在画面里
+  cameraZ *= 1.6;
 
   // 相机正对模型中心
   camera.position.set(center.x, center.y, center.z + cameraZ);
   controls.target.copy(center);
 
-  // 动态调整远近裁剪平面，防止缩放时变空白
-  camera.near = maxDim * 0.001;
-  camera.far = maxDim * 100;
-  camera.updateProjectionMatrix();
-
+  // 允许缩放到很近和很远，不设硬性限制
+  controls.minDistance = 0.1;
+  controls.maxDistance = Infinity;
   controls.update();
 
-  // 地面严格贴合模型底部（box.min.y 就是脚底）
+  // 地面贴合模型底部
   const groundY = box.min.y;
   if (threeEngine.scene) {
     threeEngine.scene.traverse(obj => {
@@ -182,12 +183,10 @@ function disposeThree() {
 
 function resetThreeCamera() {
   if (!threeEngine) return;
-  const { THREE, camera, controls, renderer, model } = threeEngine;
+  const { camera, controls, renderer, model } = threeEngine;
   if (!camera || !controls || !renderer) return;
-  camera.position.set(0, 1.5, 4);
-  controls.target.set(0, 0, 0);
-  controls.update();
-  renderer.render(threeEngine.scene, camera);
+  // 重新调用 fitCameraToModel，让相机重新适配模型
+  fitCameraToModel(camera, controls, model, renderer);
 }
 
 function toggleThreeAutoRotate() {
