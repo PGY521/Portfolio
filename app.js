@@ -58,6 +58,7 @@ function initThreeScene(canvasId, modelUrl) {
   controls.dampingFactor = 0.08;
   controls.autoRotate = threeAutoRotate;
   controls.autoRotateSpeed = 1.5;
+  controls.zoomSpeed = 0.5; // 减慢缩放速度
   threeEngine.controls = controls;
 
   // Lights
@@ -130,39 +131,42 @@ function fitCameraToModel(camera, controls, model, renderer) {
   if (!model) return;
   const { THREE } = threeEngine;
 
-  // 计算模型包围盒（世界坐标）
+  // 计算模型包围盒
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
 
-  // 相机目标点：模型中心，但 y 轴取底部（让人物站在画面中心偏上）
-  const targetY = box.min.y + size.y * 0.5; // 人物中心高度
-  controls.target.set(center.x, targetY, center.z);
+  // 把模型底部对齐到 y=0，这样脚底就在地面上
+  const bottomOffset = box.min.y;
+  model.position.y -= bottomOffset;
+  model.updateMatrixWorld(true);
 
-  // 计算相机距离：让模型高度占画面 70%
+  // 重新计算包围盒（模型已移动）
+  box.setFromObject(model);
+  const newCenter = box.getCenter(new THREE.Vector3());
+
+  // 透视相机根据画幅和模型尺寸计算最佳视角距离
   const fov = camera.fov * (Math.PI / 180);
-  const cameraZ = (size.y * 0.7) / (2 * Math.tan(fov / 2));
+  let cameraZ = maxDim / (2 * Math.tan(fov / 2));
+  cameraZ *= 1.6;
 
-  // 相机位置：正对模型中心，稍微抬高一点（模拟人眼视角）
-  camera.position.set(center.x, targetY + size.y * 0.1, center.z + cameraZ * 1.5);
+  // 相机正对模型中心
+  camera.position.set(newCenter.x, newCenter.y, newCenter.z + cameraZ);
+  controls.target.copy(newCenter);
 
-  // 缩放限制：最近到能看到细节，最远不消失
-  controls.minDistance = maxDim * 0.1;
-  controls.maxDistance = maxDim * 10;
+  // 允许缩放到很近和很远，不设硬性限制
+  controls.minDistance = 0.1;
+  controls.maxDistance = Infinity;
+  // 减慢缩放速度
+  controls.zoomSpeed = 0.5;
   controls.update();
 
-  // 地面放在模型底部
-  const groundY = box.min.y;
+  // 地面放在 y=0（模型底部已经对齐到0）
   if (threeEngine.scene) {
     threeEngine.scene.traverse(obj => {
-      if (obj.name === 'portfolioGround') {
-        obj.position.y = groundY;
-        obj.visible = true;
-      }
-      if (obj.name === 'portfolioGrid') {
-        obj.position.y = groundY;
-      }
+      if (obj.name === 'portfolioGround') obj.position.y = 0;
+      if (obj.name === 'portfolioGrid') obj.position.y = 0;
     });
   }
 }
