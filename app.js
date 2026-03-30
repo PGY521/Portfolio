@@ -58,7 +58,7 @@ function initThreeScene(canvasId, modelUrl) {
   controls.dampingFactor = 0.08;
   controls.autoRotate = threeAutoRotate;
   controls.autoRotateSpeed = 1.5;
-  controls.zoomSpeed = 0.3; // 缩放速度
+  controls.zoomSpeed = 1; // 标准缩放速度
   threeEngine.controls = controls;
 
   // Lights
@@ -155,11 +155,10 @@ function fitCameraToModel(camera, controls, model, renderer) {
   camera.position.set(newCenter.x, newCenter.y, newCenter.z + cameraZ);
   controls.target.copy(newCenter);
 
-  // 允许缩放到很近和很远，不设硬性限制
-  controls.minDistance = 0.1;
-  controls.maxDistance = Infinity;
-  // 缩放速度
-  controls.zoomSpeed = 0.3;
+  // 缩放范围根据模型尺寸动态计算（相对于初始距离的比例）
+  controls.minDistance = cameraZ * 0.3; // 最近缩放到初始距离的30%
+  controls.maxDistance = cameraZ * 10;  // 最远拉到初始距离的10倍
+  controls.zoomSpeed = 1;
   controls.update();
 
   // 地面放在 y=0（模型底部已经对齐到0）
